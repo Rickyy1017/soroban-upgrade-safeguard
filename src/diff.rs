@@ -231,10 +231,7 @@ pub fn compare_storage_schemas(
 /// Inject `Info` findings for schema references the resolver could not match
 /// against the exported spec. These are not errors — they just cap the coverage
 /// claim so the report cannot overstate what was verified.
-pub fn report_unresolved_storage_references(
-    unresolved: &[String],
-    report: &mut DiffReport,
-) {
+pub fn report_unresolved_storage_references(unresolved: &[String], report: &mut DiffReport) {
     for name in unresolved {
         report.findings.push(Finding {
             severity: Severity::Info,
@@ -2083,8 +2080,14 @@ pub fn compare_wasm_imports(
 ) {
     use std::collections::BTreeSet;
 
-    let old_set: BTreeSet<(&str, &str)> = old_imports.iter().map(|(m, n)| (m.as_str(), n.as_str())).collect();
-    let new_set: BTreeSet<(&str, &str)> = new_imports.iter().map(|(m, n)| (m.as_str(), n.as_str())).collect();
+    let old_set: BTreeSet<(&str, &str)> = old_imports
+        .iter()
+        .map(|(m, n)| (m.as_str(), n.as_str()))
+        .collect();
+    let new_set: BTreeSet<(&str, &str)> = new_imports
+        .iter()
+        .map(|(m, n)| (m.as_str(), n.as_str()))
+        .collect();
 
     // Newly required host functions (in new, not in old)
     for (module, name) in &new_set {
@@ -2989,7 +2992,12 @@ mod tests {
         let mut new = ContractSpec::default();
         new.unions.insert(
             "Event".to_string(),
-            union_with_case("Event", "Deposit", "records a deposit", vec![ScSpecTypeDef::U64]),
+            union_with_case(
+                "Event",
+                "Deposit",
+                "records a deposit",
+                vec![ScSpecTypeDef::U64],
+            ),
         );
 
         let report = compare(&old, &new);
@@ -3041,11 +3049,15 @@ mod tests {
     #[test]
     fn error_enum_documentation_change_produces_info_finding() {
         let mut old = ContractSpec::default();
-        old.error_enums
-            .insert("Error".to_string(), error_enum_with_case("Error", "NotFound", "old doc"));
+        old.error_enums.insert(
+            "Error".to_string(),
+            error_enum_with_case("Error", "NotFound", "old doc"),
+        );
         let mut new = ContractSpec::default();
-        new.error_enums
-            .insert("Error".to_string(), error_enum_with_case("Error", "NotFound", "new doc"));
+        new.error_enums.insert(
+            "Error".to_string(),
+            error_enum_with_case("Error", "NotFound", "new doc"),
+        );
 
         let report = compare(&old, &new);
         let finding = report

@@ -71,8 +71,9 @@ impl WasmCache {
             None => return Ok(None),
         };
         let dir = base.join("soroban-upgrade-safeguard").join("wasm");
-        std::fs::create_dir_all(&dir)
-            .with_context(|| format!("Failed to create WASM cache directory '{}'", dir.display()))?;
+        std::fs::create_dir_all(&dir).with_context(|| {
+            format!("Failed to create WASM cache directory '{}'", dir.display())
+        })?;
         Ok(Some(Self { dir }))
     }
 
@@ -81,8 +82,9 @@ impl WasmCache {
     /// Primarily for tests: pass a `TempDir` path to get an isolated cache.
     pub fn with_dir(dir: impl Into<PathBuf>) -> Result<Self> {
         let dir = dir.into();
-        std::fs::create_dir_all(&dir)
-            .with_context(|| format!("Failed to create WASM cache directory '{}'", dir.display()))?;
+        std::fs::create_dir_all(&dir).with_context(|| {
+            format!("Failed to create WASM cache directory '{}'", dir.display())
+        })?;
         Ok(Self { dir })
     }
 

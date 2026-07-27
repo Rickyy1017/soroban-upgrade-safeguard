@@ -56,8 +56,7 @@ fn run_with_output(
 #[test]
 fn output_flag_json_writes_to_file_not_stdout() {
     let out = tmp("output_flag_json.json");
-    let (stdout, stderr, _code, file) =
-        run_with_output("v1.wasm", "v2.wasm", "json", Some(&out));
+    let (stdout, stderr, _code, file) = run_with_output("v1.wasm", "v2.wasm", "json", Some(&out));
 
     let contents = file.expect("output file should exist");
 
@@ -124,8 +123,7 @@ fn output_flag_markdown_writes_to_file_not_stdout() {
 #[test]
 fn output_flag_text_writes_report_only_no_progress_lines() {
     let out = tmp("output_flag_text.txt");
-    let (stdout, _stderr, _code, file) =
-        run_with_output("v1.wasm", "v2.wasm", "text", Some(&out));
+    let (stdout, _stderr, _code, file) = run_with_output("v1.wasm", "v2.wasm", "text", Some(&out));
 
     let contents = file.expect("output file should exist");
 
@@ -148,8 +146,7 @@ fn output_flag_text_writes_report_only_no_progress_lines() {
 
 #[test]
 fn without_output_flag_report_goes_to_stdout() {
-    let (stdout, _stderr, _code, _file) =
-        run_with_output("v1.wasm", "v2.wasm", "json", None);
+    let (stdout, _stderr, _code, _file) = run_with_output("v1.wasm", "v2.wasm", "json", None);
 
     // stdout must contain valid JSON when no --output is given.
     assert!(
@@ -168,8 +165,7 @@ fn without_output_flag_report_goes_to_stdout() {
 #[test]
 fn output_flag_safe_upgrade_writes_file_and_exits_zero() {
     let out = tmp("output_flag_safe.json");
-    let (_stdout, _stderr, code, file) =
-        run_with_output("v1.wasm", "v1.wasm", "json", Some(&out));
+    let (_stdout, _stderr, code, file) = run_with_output("v1.wasm", "v1.wasm", "json", Some(&out));
 
     assert_eq!(code, 0, "identical upgrade must exit 0");
     let contents = file.expect("output file should exist");

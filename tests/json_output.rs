@@ -80,12 +80,12 @@ fn json_breaking_upgrade_reports_critical_and_exits_one() {
                 finding["message"].is_string(),
                 "finding must have a message"
             );
-                // Each finding must expose a stable rule identifier.
-                assert!(
-                    finding.get("rule_id").is_some(),
-                    "finding must include a stable 'rule_id'"
-                );
-                assert!(finding["rule_id"].is_string());
+            // Each finding must expose a stable rule identifier.
+            assert!(
+                finding.get("rule_id").is_some(),
+                "finding must include a stable 'rule_id'"
+            );
+            assert!(finding["rule_id"].is_string());
             if severity == "critical" {
                 saw_critical = true;
             }

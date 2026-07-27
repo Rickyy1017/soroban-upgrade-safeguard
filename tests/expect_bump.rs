@@ -113,7 +113,11 @@ fn without_expect_bump_the_exit_code_is_unchanged() {
 fn expect_bump_is_independent_of_strict() {
     // --strict fails v1 → v3 on its warnings. The bump gate is satisfied, so
     // the failure must not be attributed to it.
-    let (code, stderr) = run("v1.wasm", "v3.wasm", &["--strict", "--expect-bump", "minor"]);
+    let (code, stderr) = run(
+        "v1.wasm",
+        "v3.wasm",
+        &["--strict", "--expect-bump", "minor"],
+    );
     assert_eq!(code, 1, "--strict still fails on warnings");
     assert!(
         !stderr.contains("bump gate failed"),
@@ -122,7 +126,11 @@ fn expect_bump_is_independent_of_strict() {
 
     // And --strict does not make a satisfied gate stricter: `major` still
     // covers a `minor` recommendation.
-    let (code, stderr) = run("v1.wasm", "v3.wasm", &["--strict", "--expect-bump", "major"]);
+    let (code, stderr) = run(
+        "v1.wasm",
+        "v3.wasm",
+        &["--strict", "--expect-bump", "major"],
+    );
     assert_eq!(code, 1, "--strict fails on warnings regardless of the gate");
     assert!(!stderr.contains("bump gate failed"), "got: {stderr}");
 }

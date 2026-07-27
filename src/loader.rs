@@ -427,10 +427,7 @@ fn find_entry_by_key<'a>(
 /// Extract the host portion of a `<scheme>://<rest>` URL remainder, dropping
 /// any userinfo, port, path, query, or fragment.
 fn url_host(rest: &str) -> &str {
-    let authority = rest
-        .split(['/', '?', '#'])
-        .next()
-        .unwrap_or(rest);
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or(rest);
     // Strip `user:pass@` if present.
     let authority = authority.rsplit('@').next().unwrap_or(authority);
     authority.split(':').next().unwrap_or(authority)
@@ -739,8 +736,7 @@ mod tests {
         use crate::limits::{LimitError, ResourcePolicy};
 
         // Write a tiny but valid-looking WASM file (magic + version).
-        let path = std::env::temp_dir()
-            .join("soroban-upgrade-safeguard-oversized.wasm");
+        let path = std::env::temp_dir().join("soroban-upgrade-safeguard-oversized.wasm");
         let wasm_magic = b"\x00asm\x01\x00\x00\x00";
         std::fs::write(&path, wasm_magic).unwrap();
 
@@ -754,8 +750,8 @@ mod tests {
 
         // Must surface as a LimitError, not a generic anyhow error, so the
         // CLI can assign it exit code 2.
-        let limit_err = crate::limits::find_limit_error(&err)
-            .expect("expected a LimitError in the chain");
+        let limit_err =
+            crate::limits::find_limit_error(&err).expect("expected a LimitError in the chain");
         match limit_err {
             LimitError::WasmSizeExceeded { limit, actual } => {
                 assert_eq!(*limit, 4);
@@ -766,8 +762,14 @@ mod tests {
 
         // The error message must name both the limit and the actual size.
         let msg = err.to_string();
-        assert!(msg.contains('4') || msg.contains("4"), "limit missing: {msg}");
-        assert!(msg.contains('8') || msg.contains("8"), "actual missing: {msg}");
+        assert!(
+            msg.contains('4') || msg.contains("4"),
+            "limit missing: {msg}"
+        );
+        assert!(
+            msg.contains('8') || msg.contains("8"),
+            "actual missing: {msg}"
+        );
         assert!(msg.contains("max_wasm_size"), "hint missing: {msg}");
 
         let _ = std::fs::remove_file(&path);

@@ -101,7 +101,10 @@ fn ac1_caller_visible_critical_propagates_to_direct_dependent() {
 #[test]
 fn ac1_changed_contract_identified_in_finding() {
     let g = graph(&[dep("router", "pool")]);
-    let map = findings_map(&[("pool", vec![critical("Parameter Type Changed", "swap.amount")])]);
+    let map = findings_map(&[(
+        "pool",
+        vec![critical("Parameter Type Changed", "swap.amount")],
+    )]);
 
     let cross = g.propagate(&map);
 
@@ -147,8 +150,7 @@ fn ac3_cross_finding_names_both_changed_and_affected() {
     assert_eq!(cross[0].changed_contract, "token");
     assert_eq!(cross[0].affected_contract, "router");
     assert_ne!(
-        cross[0].changed_contract,
-        cross[0].affected_contract,
+        cross[0].changed_contract, cross[0].affected_contract,
         "changed and affected must be different contracts"
     );
 }
@@ -168,8 +170,14 @@ fn ac4_transitive_chain_a_b_c_all_affected() {
     let cross = g.propagate(&map);
     let affected: HashSet<&str> = affected_contracts(&cross).into_iter().collect();
 
-    assert!(affected.contains("pool"), "pool must be affected at depth 1");
-    assert!(affected.contains("router"), "router must be affected at depth 2");
+    assert!(
+        affected.contains("pool"),
+        "pool must be affected at depth 1"
+    );
+    assert!(
+        affected.contains("router"),
+        "router must be affected at depth 2"
+    );
     assert!(
         affected.contains("factory"),
         "factory must be affected at depth 3"
@@ -260,7 +268,10 @@ fn ac5_three_contract_cycle_terminates() {
     let cross = g.propagate(&map);
 
     // Must terminate
-    assert!(cross.len() < 30, "three-cycle must produce bounded findings");
+    assert!(
+        cross.len() < 30,
+        "three-cycle must produce bounded findings"
+    );
 }
 
 #[test]
@@ -332,15 +343,22 @@ fn ac7_missing_caller_also_detected() {
     let known: HashSet<String> = ["pool".to_string()].into_iter().collect();
 
     let missing = g.missing_contracts(&known);
-    assert!(missing.contains(&"ghost_router"), "missing caller must be detected");
+    assert!(
+        missing.contains(&"ghost_router"),
+        "missing caller must be detected"
+    );
 }
 
 #[test]
 fn ac7_no_missing_when_all_present() {
     let g = graph(&[dep("pool", "token"), dep("router", "pool")]);
-    let known: HashSet<String> = ["pool".to_string(), "token".to_string(), "router".to_string()]
-        .into_iter()
-        .collect();
+    let known: HashSet<String> = [
+        "pool".to_string(),
+        "token".to_string(),
+        "router".to_string(),
+    ]
+    .into_iter()
+    .collect();
 
     assert!(g.missing_contracts(&known).is_empty());
     assert!(missing_contract_findings(&[]).is_empty());
@@ -373,23 +391,24 @@ fn ac8_graph_with_no_callee_findings_produces_no_cross_findings() {
 #[test]
 fn edge_info_findings_never_propagate_regardless_of_category() {
     let g = graph(&[dep("pool", "token")]);
-    let map = findings_map(&[
-        (
-            "token",
-            vec![
-                info("Function Added", "new_fn"),
-                info("Enum Case Added", "Status.NewVariant"),
-                info("Union Case Added", "Action.NewCase"),
-                info("Struct Added", "NewType"),
-            ],
-        ),
-    ]);
+    let map = findings_map(&[(
+        "token",
+        vec![
+            info("Function Added", "new_fn"),
+            info("Enum Case Added", "Status.NewVariant"),
+            info("Union Case Added", "Action.NewCase"),
+            info("Struct Added", "NewType"),
+        ],
+    )]);
 
     let cross = g.propagate(&map);
     assert!(
         cross.is_empty(),
         "info findings must never propagate: {:?}",
-        cross.iter().map(|f| &f.finding.category).collect::<Vec<_>>()
+        cross
+            .iter()
+            .map(|f| &f.finding.category)
+            .collect::<Vec<_>>()
     );
 }
 
@@ -399,33 +418,33 @@ fn edge_info_findings_never_propagate_regardless_of_category() {
 fn edge_empty_function_filter_means_all_functions() {
     // functions = [] means all functions
     let g = graph(&[dep("pool", "token")]); // no functions = all
-    let map = findings_map(&[
-        (
-            "token",
-            vec![
-                critical("Function Removed", "transfer"),
-                critical("Function Removed", "balance"),
-            ],
-        ),
-    ]);
+    let map = findings_map(&[(
+        "token",
+        vec![
+            critical("Function Removed", "transfer"),
+            critical("Function Removed", "balance"),
+        ],
+    )]);
 
     let cross = g.propagate(&map);
-    assert_eq!(cross.len(), 2, "both findings must propagate with no filter");
+    assert_eq!(
+        cross.len(),
+        2,
+        "both findings must propagate with no filter"
+    );
 }
 
 #[test]
 fn edge_function_filter_blocks_unrelated_findings() {
     let g = graph(&[dep_fn("pool", "token", &["transfer"])]);
-    let map = findings_map(&[
-        (
-            "token",
-            vec![
-                critical("Function Removed", "transfer"),   // watched
-                critical("Function Removed", "allowance"),  // NOT watched
-                critical("Return Type Changed", "balance"), // NOT watched
-            ],
-        ),
-    ]);
+    let map = findings_map(&[(
+        "token",
+        vec![
+            critical("Function Removed", "transfer"),   // watched
+            critical("Function Removed", "allowance"),  // NOT watched
+            critical("Return Type Changed", "balance"), // NOT watched
+        ],
+    )]);
 
     let cross = g.propagate(&map);
     assert_eq!(
@@ -433,10 +452,7 @@ fn edge_function_filter_blocks_unrelated_findings() {
         1,
         "only transfer-related finding must propagate"
     );
-    assert_eq!(
-        cross[0].finding.target.as_deref(),
-        Some("transfer")
-    );
+    assert_eq!(cross[0].finding.target.as_deref(), Some("transfer"));
 }
 
 #[test]
@@ -528,10 +544,7 @@ fn edge_struct_removal_is_caller_visible_and_propagates() {
     let map = findings_map(&[("token", vec![critical("Struct Removed", "TransferData")])]);
 
     let cross = g.propagate(&map);
-    assert!(
-        !cross.is_empty(),
-        "Struct Removed must propagate to pool"
-    );
+    assert!(!cross.is_empty(), "Struct Removed must propagate to pool");
 }
 
 #[test]

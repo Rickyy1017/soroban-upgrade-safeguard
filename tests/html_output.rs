@@ -41,7 +41,10 @@ fn html_output_is_a_single_self_contained_document() {
     let (stdout, code) = run_html("v1.wasm", "v2.wasm");
 
     assert_eq!(code, 1, "the verdict must be unchanged by the format");
-    assert!(stdout.trim_start().starts_with("<!DOCTYPE html>"), "{stdout}");
+    assert!(
+        stdout.trim_start().starts_with("<!DOCTYPE html>"),
+        "{stdout}"
+    );
     assert!(stdout.contains("</html>"));
     assert!(stdout.contains("<style>"), "CSS must be inline");
 
@@ -77,7 +80,10 @@ fn html_carries_the_same_information_as_the_other_formats() {
         assert!(stdout.contains(category), "missing category: {category}");
     }
     assert!(stdout.contains("<details"), "categories must be groupable");
-    assert!(stdout.contains("class=\"count\""), "groups must show counts");
+    assert!(
+        stdout.contains("class=\"count\""),
+        "groups must show counts"
+    );
 
     // Severity filtering in the page.
     assert!(stdout.contains("sev-toggle"), "severity filter missing");
@@ -248,7 +254,10 @@ fn batch_mode_renders_every_pair_into_one_document() {
     );
     assert_eq!(stdout.matches("</html>").count(), 1);
     for name in ["breaking_contract", "clean_contract", "renaming_contract"] {
-        assert!(stdout.contains(name), "pair '{name}' missing from the document");
+        assert!(
+            stdout.contains(name),
+            "pair '{name}' missing from the document"
+        );
     }
     assert_eq!(
         stdout.matches("class=\"report\"").count(),

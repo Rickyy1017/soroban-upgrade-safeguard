@@ -123,8 +123,10 @@ fn snapshot_strict_mode_text_output() {
     let new_bytes = std::fs::read(wasm("v3.wasm")).unwrap();
     let old_meta = soroban_upgrade_safeguard::parser::extract_metadata(&old_bytes).unwrap();
     let new_meta = soroban_upgrade_safeguard::parser::extract_metadata(&new_bytes).unwrap();
-    let (old_spec, _) = soroban_upgrade_safeguard::spec::ContractSpec::from_entries_checked(&old_meta.spec);
-    let (new_spec, _) = soroban_upgrade_safeguard::spec::ContractSpec::from_entries_checked(&new_meta.spec);
+    let (old_spec, _) =
+        soroban_upgrade_safeguard::spec::ContractSpec::from_entries_checked(&old_meta.spec);
+    let (new_spec, _) =
+        soroban_upgrade_safeguard::spec::ContractSpec::from_entries_checked(&new_meta.spec);
     let diff_report = soroban_upgrade_safeguard::diff::compare(&old_spec, &new_spec);
 
     use soroban_upgrade_safeguard::suppression::SuppressionConfig;
@@ -159,8 +161,10 @@ reason = "Planned storage migration in v2."
     let new_bytes = std::fs::read(wasm("v2.wasm")).unwrap();
     let old_meta = soroban_upgrade_safeguard::parser::extract_metadata(&old_bytes).unwrap();
     let new_meta = soroban_upgrade_safeguard::parser::extract_metadata(&new_bytes).unwrap();
-    let (old_spec, _) = soroban_upgrade_safeguard::spec::ContractSpec::from_entries_checked(&old_meta.spec);
-    let (new_spec, _) = soroban_upgrade_safeguard::spec::ContractSpec::from_entries_checked(&new_meta.spec);
+    let (old_spec, _) =
+        soroban_upgrade_safeguard::spec::ContractSpec::from_entries_checked(&old_meta.spec);
+    let (new_spec, _) =
+        soroban_upgrade_safeguard::spec::ContractSpec::from_entries_checked(&new_meta.spec);
     let diff_report = soroban_upgrade_safeguard::diff::compare(&old_spec, &new_spec);
 
     let suppressions =

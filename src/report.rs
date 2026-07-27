@@ -757,6 +757,30 @@ impl SafetyReport {
     }
 
     /// Generate a structured, human-readable text output for the CLI.
+    fn categories_sorted_by_severity(&self) -> Vec<&String> {
+        let mut categories: Vec<&String> = self.findings_by_category.keys().collect();
+        categories.sort_by(|a, b| {
+            let rank = |name: &str| {
+                let findings = self.findings_by_category.get(name).unwrap();
+                if findings
+                    .iter()
+                    .any(|r| r.finding.severity == Severity::Critical)
+                {
+                    0
+                } else if findings
+                    .iter()
+                    .any(|r| r.finding.severity == Severity::Warning)
+                {
+                    1
+                } else {
+                    2
+                }
+            };
+            rank(a).cmp(&rank(b)).then_with(|| a.cmp(b))
+        });
+        categories
+    }
+
     pub fn generate_summary_text(&self, explain: bool) -> String {
         let mut output = String::new();
         output.push_str(
@@ -921,12 +945,7 @@ impl SafetyReport {
             return output;
         }
 
-        // Sort categories to have consistent output; surface Environment first.
-        let mut categories: Vec<&String> = self.findings_by_category.keys().collect();
-        categories.sort_by(|a, b| {
-            let rank = |name: &str| if name == "Environment" { 0 } else { 1 };
-            rank(a).cmp(&rank(b)).then_with(|| a.cmp(b))
-        });
+        let categories = self.categories_sorted_by_severity();
 
         for category in categories {
             output.push_str(
@@ -985,15 +1004,15 @@ impl SafetyReport {
                         );
                     }
                 }
-                if self.diff_types
-                    && crate::type_diff::is_type_change_category(&finding.category)
-                {
+                if self.diff_types && crate::type_diff::is_type_change_category(&finding.category) {
                     if let Some((old_ty, new_ty)) =
                         crate::type_diff::extract_type_pair(&finding.message)
                     {
-                        output.push_str(
-                            &crate::type_diff::render_type_diff(&old_ty, &new_ty, self.use_color),
-                        );
+                        output.push_str(&crate::type_diff::render_type_diff(
+                            &old_ty,
+                            &new_ty,
+                            self.use_color,
+                        ));
                     }
                 }
             }
@@ -1092,12 +1111,7 @@ impl SafetyReport {
                     .bold()
                     .to_string(),
             );
-            output.push_str(
-                &"📊 BUILD METRICS\n"
-                    .bold()
-                    .cyan()
-                    .to_string(),
-            );
+            output.push_str(&"📊 BUILD METRICS\n".bold().cyan().to_string());
             output.push_str(
                 &"========================================\n"
                     .bold()
@@ -1138,7 +1152,8 @@ impl SafetyReport {
         output.push_str("# Soroban Upgrade Safety Report\n\n");
 
         if self.strict {
-            output.push_str("> ⚠️ **[STRICT MODE ACTIVE]** — Warnings are treated as failures.\n\n");
+            output
+                .push_str("> ⚠️ **[STRICT MODE ACTIVE]** — Warnings are treated as failures.\n\n");
         }
 
         let status = if self.is_safe {
@@ -1239,12 +1254,7 @@ impl SafetyReport {
             return output;
         }
 
-        // Sort categories to have consistent output; surface Environment first.
-        let mut categories: Vec<&String> = self.findings_by_category.keys().collect();
-        categories.sort_by(|a, b| {
-            let rank = |name: &str| if name == "Environment" { 0 } else { 1 };
-            rank(a).cmp(&rank(b)).then_with(|| a.cmp(b))
-        });
+        let categories = self.categories_sorted_by_severity();
 
         for category in categories {
             output.push_str(&format!("### {}\n\n", category));
@@ -1570,26 +1580,42 @@ impl SafetyReport {
             let delta_enum = m.new_enum_count as i64 - m.old_enum_count as i64;
             let delta_union = m.new_union_count as i64 - m.old_union_count as i64;
             let delta_err = m.new_error_enum_count as i64 - m.old_error_enum_count as i64;
-            let fmt_count = |d: i64| if d >= 0 { format!("+{}", d) } else { format!("{}", d) };
+            let fmt_count = |d: i64| {
+                if d >= 0 {
+                    format!("+{}", d)
+                } else {
+                    format!("{}", d)
+                }
+            };
             output.push_str(&format!(
                 "| **Functions** | {} | {} | {} |\n",
-                m.old_function_count, m.new_function_count, fmt_count(delta_fn)
+                m.old_function_count,
+                m.new_function_count,
+                fmt_count(delta_fn)
             ));
             output.push_str(&format!(
                 "| **Structs** | {} | {} | {} |\n",
-                m.old_struct_count, m.new_struct_count, fmt_count(delta_struct)
+                m.old_struct_count,
+                m.new_struct_count,
+                fmt_count(delta_struct)
             ));
             output.push_str(&format!(
                 "| **Enums** | {} | {} | {} |\n",
-                m.old_enum_count, m.new_enum_count, fmt_count(delta_enum)
+                m.old_enum_count,
+                m.new_enum_count,
+                fmt_count(delta_enum)
             ));
             output.push_str(&format!(
                 "| **Unions** | {} | {} | {} |\n",
-                m.old_union_count, m.new_union_count, fmt_count(delta_union)
+                m.old_union_count,
+                m.new_union_count,
+                fmt_count(delta_union)
             ));
             output.push_str(&format!(
                 "| **Error Enums** | {} | {} | {} |\n",
-                m.old_error_enum_count, m.new_error_enum_count, fmt_count(delta_err)
+                m.old_error_enum_count,
+                m.new_error_enum_count,
+                fmt_count(delta_err)
             ));
             output.push('\n');
         }
@@ -1770,11 +1796,7 @@ impl SafetyReport {
         }
 
         // ── Findings, grouped by category with counts ──────────────────────
-        let mut categories: Vec<&String> = self.findings_by_category.keys().collect();
-        categories.sort_by(|a, b| {
-            let rank = |name: &str| if name == "Environment" { 0 } else { 1 };
-            rank(a).cmp(&rank(b)).then_with(|| a.cmp(b))
-        });
+        let categories = self.categories_sorted_by_severity();
 
         for category in categories {
             let mut group = self.findings_by_category.get(category).unwrap().clone();
@@ -1803,9 +1825,7 @@ impl SafetyReport {
                     classes.push_str(" suppressed");
                 }
                 out.push_str(&format!("<li class=\"{classes}\">"));
-                out.push_str(&format!(
-                    "<span class=\"badge badge-{sev}\">{sev}</span> "
-                ));
+                out.push_str(&format!("<span class=\"badge badge-{sev}\">{sev}</span> "));
                 if reported.suppressed {
                     out.push_str("<span class=\"badge badge-suppressed\">suppressed</span> ");
                 }
@@ -1855,8 +1875,10 @@ impl SafetyReport {
 
         if let Some(bd) = &self.baseline_diff {
             if !bd.resolved.is_empty() {
-                out.push_str("<details class=\"category\">\n<summary>✅ Resolved Since Baseline \
-                              <span class=\"count\">");
+                out.push_str(
+                    "<details class=\"category\">\n<summary>✅ Resolved Since Baseline \
+                              <span class=\"count\">",
+                );
                 out.push_str(&bd.resolved.len().to_string());
                 out.push_str("</span></summary>\n<ul class=\"findings\">\n");
                 for r in &bd.resolved {
@@ -1870,10 +1892,12 @@ impl SafetyReport {
         }
 
         if !self.is_safe {
-            out.push_str("<p class=\"banner fail\">⚠️ ACTION REQUIRED: the new contract version \
+            out.push_str(
+                "<p class=\"banner fail\">⚠️ ACTION REQUIRED: the new contract version \
                           modifies existing storage layouts or function interfaces. Deploying \
                           this upgrade will result in orphaned data, serialization panics, or \
-                          broken integrations.</p>\n");
+                          broken integrations.</p>\n",
+            );
         }
 
         // ── Suppression audit log ──────────────────────────────────────────
@@ -1893,14 +1917,17 @@ impl SafetyReport {
         });
 
         if !suppressed_list.is_empty() {
-            out.push_str("<details class=\"category\" open>\n<summary>🔕 Applied Suppressions \
-                          Audit Log <span class=\"count\">");
+            out.push_str(
+                "<details class=\"category\" open>\n<summary>🔕 Applied Suppressions \
+                          Audit Log <span class=\"count\">",
+            );
             out.push_str(&suppressed_list.len().to_string());
             out.push_str("</span></summary>\n");
-            out.push_str("<div class=\"table-scroll\"><table>\n<thead><tr>\
+            out.push_str(
+                "<div class=\"table-scroll\"><table>\n<thead><tr>\
                           <th>Category</th><th>Target</th><th>Fingerprint</th>\
-                          <th>Author</th><th>Expiry</th><th>Reason</th>\
-                          </tr></thead>\n<tbody>\n");
+                          <th>Author</th><th>Expiry</th><th>Reason</th                          </tr></thead>\n<tbody>\n",
+            );
             for reported in suppressed_list {
                 let f = &reported.finding;
                 out.push_str(&format!(
@@ -1925,10 +1952,18 @@ impl SafetyReport {
     /// Append the informational build-metrics table to HTML output.
     fn append_metrics_html(&self, out: &mut String) {
         let Some(ref m) = self.metrics else { return };
-        let fmt_count = |d: i64| if d >= 0 { format!("+{d}") } else { d.to_string() };
+        let fmt_count = |d: i64| {
+            if d >= 0 {
+                format!("+{d}")
+            } else {
+                d.to_string()
+            }
+        };
         out.push_str("<details class=\"category\">\n<summary>📊 Build Metrics</summary>\n");
-        out.push_str("<div class=\"table-scroll\"><table>\n<thead><tr><th>Metric</th><th>Old</th>\
-                      <th>New</th><th>Delta</th></tr></thead>\n<tbody>\n");
+        out.push_str(
+            "<div class=\"table-scroll\"><table>\n<thead><tr><th>Metric</th><th>Old</th>\
+                      <th>New</th><th>Delta</th></tr></thead>\n<tbody>\n",
+        );
         out.push_str(&format!(
             "<tr><td>WASM size</td><td>{}</td><td>{}</td><td>{}</td></tr>\n",
             BuildMetrics::format_bytes(m.old_size_bytes),
@@ -1991,7 +2026,11 @@ impl SafetyReport {
                         // "verdict changed by override" claim stays accurate
                         // for the filtered subset rather than describing a set
                         // of findings this report no longer shows.
-                        match rf.original_severity.as_ref().unwrap_or(&rf.finding.severity) {
+                        match rf
+                            .original_severity
+                            .as_ref()
+                            .unwrap_or(&rf.finding.severity)
+                        {
                             Severity::Critical => engine_failing_critical += 1,
                             Severity::Warning => engine_failing_warning += 1,
                             _ => {}
@@ -2523,5 +2562,115 @@ mod tests {
         // Critical findings -> major (even if other findings are present)
         report.critical_count = 1;
         assert_eq!(report.recommended_bump(), "major");
+    }
+
+    #[test]
+    fn categories_are_sorted_by_severity_then_name() {
+        let report = SafetyReport::new(&DiffReport {
+            findings: vec![
+                Finding {
+                    severity: Severity::Info,
+                    category: "Environment".to_string(),
+                    message: "Environment metadata changed".to_string(),
+                    type_name: None,
+                    target: None,
+                    classification: None,
+                },
+                Finding {
+                    severity: Severity::Warning,
+                    category: "Function Renamed".to_string(),
+                    message: "Function renamed".to_string(),
+                    type_name: None,
+                    target: None,
+                    classification: None,
+                },
+                Finding {
+                    severity: Severity::Critical,
+                    category: "Struct Removed".to_string(),
+                    message: "Struct removed".to_string(),
+                    type_name: None,
+                    target: None,
+                    classification: None,
+                },
+                Finding {
+                    severity: Severity::Info,
+                    category: "Enum Added".to_string(),
+                    message: "Enum added".to_string(),
+                    type_name: None,
+                    target: None,
+                    classification: None,
+                },
+            ],
+        });
+
+        let sorted: Vec<&str> = report
+            .categories_sorted_by_severity()
+            .iter()
+            .map(|s| s.as_str())
+            .collect();
+
+        assert_eq!(
+            sorted,
+            vec![
+                "Struct Removed",
+                "Function Renamed",
+                "Enum Added",
+                "Environment"
+            ]
+        );
+    }
+
+    #[test]
+    fn severity_order_applies_in_text_and_markdown_output() {
+        let report = SafetyReport::new(&DiffReport {
+            findings: vec![
+                Finding {
+                    severity: Severity::Info,
+                    category: "Environment".to_string(),
+                    message: "Environment metadata changed".to_string(),
+                    type_name: None,
+                    target: None,
+                    classification: None,
+                },
+                Finding {
+                    severity: Severity::Warning,
+                    category: "Function Renamed".to_string(),
+                    message: "Function renamed".to_string(),
+                    type_name: None,
+                    target: None,
+                    classification: None,
+                },
+                Finding {
+                    severity: Severity::Critical,
+                    category: "Struct Removed".to_string(),
+                    message: "Struct removed".to_string(),
+                    type_name: None,
+                    target: None,
+                    classification: None,
+                },
+                Finding {
+                    severity: Severity::Info,
+                    category: "Enum Added".to_string(),
+                    message: "Enum added".to_string(),
+                    type_name: None,
+                    target: None,
+                    classification: None,
+                },
+            ],
+        });
+
+        let text = report.generate_summary_text(false);
+        let struct_pos = text.find("--- [STRUCT REMOVED] ---").unwrap();
+        let function_pos = text.find("--- [FUNCTION RENAMED] ---").unwrap();
+        let enum_pos = text.find("--- [ENUM ADDED] ---").unwrap();
+        let env_pos = text.find("--- [ENVIRONMENT] ---").unwrap();
+        assert!(struct_pos < function_pos && function_pos < enum_pos && enum_pos < env_pos);
+
+        let markdown = report.generate_summary_markdown();
+        let struct_pos = markdown.find("### Struct Removed").unwrap();
+        let function_pos = markdown.find("### Function Renamed").unwrap();
+        let enum_pos = markdown.find("### Enum Added").unwrap();
+        let env_pos = markdown.find("### Environment").unwrap();
+        assert!(struct_pos < function_pos && function_pos < enum_pos && enum_pos < env_pos);
     }
 }

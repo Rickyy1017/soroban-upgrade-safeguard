@@ -121,7 +121,10 @@ fn gha_warning_only_emits_warning_annotations() {
     let (code, stdout) = run_gha("v1.wasm", "v3.wasm");
 
     // Non-strict mode: warnings don't fail the run.
-    assert_eq!(code, 0, "warning-only upgrade in non-strict mode must exit 0");
+    assert_eq!(
+        code, 0,
+        "warning-only upgrade in non-strict mode must exit 0"
+    );
 
     assert!(
         stdout.lines().any(|l| l.starts_with("::warning::")),
@@ -137,10 +140,7 @@ fn gha_warning_only_emits_warning_annotations() {
 #[test]
 fn gha_warning_only_strict_exits_one() {
     let (code, _stdout) = run_gha_ext("v1.wasm", "v3.wasm", &["--strict"]);
-    assert_eq!(
-        code, 1,
-        "warning-only upgrade under --strict must exit 1"
-    );
+    assert_eq!(code, 1, "warning-only upgrade under --strict must exit 1");
 }
 
 // ---------------------------------------------------------------------------
@@ -192,8 +192,7 @@ fn gha_batch_mode_uses_log_groups() {
         new_v2 = wasm("v2.wasm").to_str().unwrap(),
     );
 
-    let manifest_path =
-        PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("gha_batch_manifest.toml");
+    let manifest_path = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("gha_batch_manifest.toml");
     std::fs::write(&manifest_path, manifest_content).expect("failed to write manifest");
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))

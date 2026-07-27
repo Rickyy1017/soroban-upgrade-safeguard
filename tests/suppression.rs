@@ -18,6 +18,7 @@
 //! plain storage type and its suppression key is the structural one.
 
 use serde_json::Value;
+use soroban_upgrade_safeguard::suppression::SuppressionConfig;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -63,6 +64,13 @@ fn run(config: Option<&PathBuf>) -> (Value, i32) {
     let json: Value = serde_json::from_str(&stdout)
         .unwrap_or_else(|e| panic!("stdout was not valid JSON: {e}\n---stdout---\n{stdout}"));
     (json, code)
+}
+
+#[test]
+fn example_suppression_config_parses() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".safeguard.example.toml");
+    SuppressionConfig::load_from_path(&path)
+        .expect(".safeguard.example.toml must parse with the real suppression loader");
 }
 
 /// Helper to get all Critical findings and their computed fingerprints.
@@ -118,9 +126,11 @@ fn rule_id_based_suppression_matches_stable_identifier() {
     assert_eq!(code, 0, "suppressing by rule_id should pass the run");
     assert_eq!(json["suppressed_count"].as_u64().unwrap(), 1);
     assert!(
-        findings(&json).iter().any(|(c, t, s)| c == "Struct Field Removed"
-            && t.as_deref() == Some("ConfigData.threshold")
-            && *s),
+        findings(&json)
+            .iter()
+            .any(|(c, t, s)| c == "Struct Field Removed"
+                && t.as_deref() == Some("ConfigData.threshold")
+                && *s),
         "the removed field must appear as suppressed when matched by rule_id"
     );
 }

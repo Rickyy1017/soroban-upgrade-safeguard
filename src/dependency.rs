@@ -119,10 +119,7 @@ impl DependencyGraph {
     ///
     /// These are reported as findings so an operator knows the dependency graph
     /// is incomplete for those edges.
-    pub fn missing_contracts<'a>(
-        &'a self,
-        known_contracts: &'a HashSet<String>,
-    ) -> Vec<&'a str> {
+    pub fn missing_contracts<'a>(&'a self, known_contracts: &'a HashSet<String>) -> Vec<&'a str> {
         self.all_referenced
             .iter()
             .filter(|name| !known_contracts.contains(*name))
@@ -144,13 +141,7 @@ impl DependencyGraph {
         let nodes: Vec<String> = self.edges.keys().cloned().collect();
         for node in nodes {
             if !visited.contains(&node) {
-                self.dfs_cycles(
-                    &node,
-                    &mut visited,
-                    &mut on_stack,
-                    &mut path,
-                    &mut cycles,
-                );
+                self.dfs_cycles(&node, &mut visited, &mut on_stack, &mut path, &mut cycles);
             }
         }
         cycles
@@ -238,12 +229,7 @@ impl DependencyGraph {
                         let key = propagation_key(callee, finding);
                         let dedup = (caller.clone(), callee.clone(), key);
                         if emitted.insert(dedup) {
-                            queue.push_back((
-                                callee.clone(),
-                                caller.clone(),
-                                finding.clone(),
-                                1,
-                            ));
+                            queue.push_back((callee.clone(), caller.clone(), finding.clone(), 1));
                         }
                     }
                 }
@@ -355,10 +341,9 @@ fn function_is_watched(finding: &Finding, watched_fns: &[String]) -> bool {
         // since they do not belong to any specific function.
         None => return false,
     };
-    watched_fns.iter().any(|fn_name| {
-        target == fn_name.as_str()
-            || target.starts_with(&format!("{}.", fn_name))
-    })
+    watched_fns
+        .iter()
+        .any(|fn_name| target == fn_name.as_str() || target.starts_with(&format!("{}.", fn_name)))
 }
 
 /// A stable string key for a finding used to deduplicate propagated copies.
@@ -577,11 +562,8 @@ mod tests {
 
     #[test]
     fn watched_function_propagates() {
-        let graph = DependencyGraph::from_declarations(&[dep_filtered(
-            "pool",
-            "token",
-            &["transfer"],
-        )]);
+        let graph =
+            DependencyGraph::from_declarations(&[dep_filtered("pool", "token", &["transfer"])]);
         let mut findings: HashMap<String, Vec<Finding>> = HashMap::new();
         findings.insert(
             "token".to_string(),
@@ -593,11 +575,8 @@ mod tests {
 
     #[test]
     fn unwatched_function_does_not_propagate() {
-        let graph = DependencyGraph::from_declarations(&[dep_filtered(
-            "pool",
-            "token",
-            &["balance"],
-        )]);
+        let graph =
+            DependencyGraph::from_declarations(&[dep_filtered("pool", "token", &["balance"])]);
         let mut findings: HashMap<String, Vec<Finding>> = HashMap::new();
         findings.insert(
             "token".to_string(),
@@ -613,15 +592,15 @@ mod tests {
     #[test]
     fn parameter_finding_matches_function_prefix() {
         // "transfer.amount" starts with "transfer." so it matches the filter
-        let graph = DependencyGraph::from_declarations(&[dep_filtered(
-            "pool",
-            "token",
-            &["transfer"],
-        )]);
+        let graph =
+            DependencyGraph::from_declarations(&[dep_filtered("pool", "token", &["transfer"])]);
         let mut findings: HashMap<String, Vec<Finding>> = HashMap::new();
         findings.insert(
             "token".to_string(),
-            vec![critical_finding("Parameter Type Changed", "transfer.amount")],
+            vec![critical_finding(
+                "Parameter Type Changed",
+                "transfer.amount",
+            )],
         );
         let cross = graph.propagate(&findings);
         assert_eq!(cross.len(), 1);
@@ -632,10 +611,8 @@ mod tests {
     #[test]
     fn transitive_propagation_reaches_indirect_caller() {
         // router → pool → token
-        let graph = DependencyGraph::from_declarations(&[
-            dep("pool", "token"),
-            dep("router", "pool"),
-        ]);
+        let graph =
+            DependencyGraph::from_declarations(&[dep("pool", "token"), dep("router", "pool")]);
         let mut findings: HashMap<String, Vec<Finding>> = HashMap::new();
         findings.insert(
             "token".to_string(),
@@ -676,10 +653,19 @@ mod tests {
         // Must terminate without infinite loop
         let cross = graph.propagate(&findings);
         // Each contract gets exactly one finding from the other, no duplicates
-        let b_affected: Vec<_> = cross.iter().filter(|f| f.affected_contract == "B").collect();
-        let a_affected: Vec<_> = cross.iter().filter(|f| f.affected_contract == "A").collect();
+        let b_affected: Vec<_> = cross
+            .iter()
+            .filter(|f| f.affected_contract == "B")
+            .collect();
+        let a_affected: Vec<_> = cross
+            .iter()
+            .filter(|f| f.affected_contract == "A")
+            .collect();
         // Each should get findings, but no unbounded growth
-        assert!(cross.len() <= 4, "cycle must not produce unbounded findings");
+        assert!(
+            cross.len() <= 4,
+            "cycle must not produce unbounded findings"
+        );
         // Both contracts must be affected
         assert!(!b_affected.is_empty());
         assert!(!a_affected.is_empty());
@@ -713,8 +699,9 @@ mod tests {
     #[test]
     fn all_present_reports_nothing_missing() {
         let graph = DependencyGraph::from_declarations(&[dep("pool", "token")]);
-        let known: HashSet<String> =
-            ["pool".to_string(), "token".to_string()].into_iter().collect();
+        let known: HashSet<String> = ["pool".to_string(), "token".to_string()]
+            .into_iter()
+            .collect();
         let missing = graph.missing_contracts(&known);
         assert!(missing.is_empty());
     }
@@ -724,10 +711,8 @@ mod tests {
     #[test]
     fn multiple_callers_all_receive_findings() {
         // Both pool and router call token.
-        let graph = DependencyGraph::from_declarations(&[
-            dep("pool", "token"),
-            dep("router", "token"),
-        ]);
+        let graph =
+            DependencyGraph::from_declarations(&[dep("pool", "token"), dep("router", "token")]);
         let mut findings: HashMap<String, Vec<Finding>> = HashMap::new();
         findings.insert(
             "token".to_string(),

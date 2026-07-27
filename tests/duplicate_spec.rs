@@ -9,13 +9,11 @@
 //! - A WASM with two conflicting sections does NOT silently produce is_safe: true.
 //! - Existing single-section fixtures are unaffected.
 
-use soroban_upgrade_safeguard::{
-    compare_wasm_bytes_with_options, diff::Severity, CompareOptions,
-};
 use soroban_upgrade_safeguard::spec::{ContractSpec, TaggedSpecEntry};
+use soroban_upgrade_safeguard::{compare_wasm_bytes_with_options, diff::Severity, CompareOptions};
 use stellar_xdr::curr::{
-    ScSpecEntry, ScSpecFunctionV0, ScSpecUdtEnumV0, ScSpecUdtErrorEnumV0,
-    ScSpecUdtStructFieldV0, ScSpecUdtStructV0, ScSpecUdtUnionV0, StringM, VecM,
+    ScSpecEntry, ScSpecFunctionV0, ScSpecUdtEnumV0, ScSpecUdtErrorEnumV0, ScSpecUdtStructFieldV0,
+    ScSpecUdtStructV0, ScSpecUdtUnionV0, StringM, VecM,
 };
 
 // -----------------------------------------------------------------------
@@ -482,7 +480,10 @@ fn scope_json_reflects_section_count_and_duplicate_names() {
 
     // duplicate name "Ledger" must appear in old_duplicate_names
     assert!(
-        report.scope.old_duplicate_names.contains(&"Ledger".to_string()),
+        report
+            .scope
+            .old_duplicate_names
+            .contains(&"Ledger".to_string()),
         "old_duplicate_names must contain 'Ledger', got: {:?}",
         report.scope.old_duplicate_names
     );

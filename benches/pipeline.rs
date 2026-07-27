@@ -87,7 +87,9 @@ fn encode_entries(entries: &[ScSpecEntry]) -> Vec<u8> {
     };
     let mut buf = Limited::new(Vec::new(), unlimited);
     for entry in entries {
-        entry.write_xdr(&mut buf).expect("synthetic entry must encode");
+        entry
+            .write_xdr(&mut buf)
+            .expect("synthetic entry must encode");
     }
     buf.inner
 }
@@ -132,9 +134,13 @@ fn bench_diffing(c: &mut Criterion) {
     for size in SIZES {
         let old = ContractSpec::from_entries(&make_function_entries(size));
         let new = ContractSpec::from_entries(&make_function_entries(size));
-        group.bench_with_input(BenchmarkId::from_parameter(size), &(old, new), |b, (old, new)| {
-            b.iter(|| diff::compare(old, new));
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(size),
+            &(old, new),
+            |b, (old, new)| {
+                b.iter(|| diff::compare(old, new));
+            },
+        );
     }
     group.finish();
 }

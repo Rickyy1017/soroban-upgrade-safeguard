@@ -385,7 +385,10 @@ fn unknown_extension_manifest_shows_both_errors() {
     let stderr = String::from_utf8(output.stderr).expect("stderr was not valid UTF-8");
     let code = output.status.code().expect("process terminated by signal");
 
-    assert_ne!(code, 0, "unrecognised-extension invalid manifest must exit non-zero");
+    assert_ne!(
+        code, 0,
+        "unrecognised-extension invalid manifest must exit non-zero"
+    );
     // Both parser errors should appear when the extension gives no hint.
     assert!(
         stderr.contains("TOML error") || stderr.contains("toml error"),
@@ -428,7 +431,12 @@ fn direct_dependency_propagates_breaking_change() {
     let manifest_path = write_manifest("cross_contract_direct.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "json"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .output()
         .expect("failed to run binary");
 
@@ -442,7 +450,10 @@ fn direct_dependency_propagates_breaking_change() {
     let cross_findings = json["cross_contract_findings"]["pool"]
         .as_array()
         .expect("pool must have cross-contract findings");
-    assert!(!cross_findings.is_empty(), "pool must receive propagated findings from token");
+    assert!(
+        !cross_findings.is_empty(),
+        "pool must receive propagated findings from token"
+    );
     assert_eq!(cross_findings[0]["propagation_depth"], 1);
     assert_eq!(cross_findings[0]["changed_contract"], "token");
     assert_eq!(cross_findings[0]["affected_contract"], "pool");
@@ -489,7 +500,12 @@ fn transitive_dependency_propagates_breaking_change() {
     let manifest_path = write_manifest("cross_contract_transitive.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "json"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .output()
         .expect("failed to run binary");
 
@@ -506,7 +522,10 @@ fn transitive_dependency_propagates_breaking_change() {
         .expect("router must have findings");
 
     assert!(!pool_cross.is_empty(), "pool directly depends on token");
-    assert!(!router_cross.is_empty(), "router transitively depends on token via pool");
+    assert!(
+        !router_cross.is_empty(),
+        "router transitively depends on token via pool"
+    );
     assert_eq!(pool_cross[0]["propagation_depth"], 1);
     assert_eq!(router_cross[0]["propagation_depth"], 2);
     assert_eq!(pool_cross[0]["changed_contract"], "token");
@@ -544,7 +563,12 @@ fn cyclic_dependency_terminates_and_reports() {
     let manifest_path = write_manifest("cross_contract_cyclic.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "json"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .output()
         .expect("failed to run binary");
 
@@ -556,15 +580,19 @@ fn cyclic_dependency_terminates_and_reports() {
     let dep_findings = json["dependency_findings"]
         .as_array()
         .expect("must have dependency findings");
-    let cycle_finding = dep_findings.iter().find(|f| f["category"] == "Cyclic Contract Dependency");
+    let cycle_finding = dep_findings
+        .iter()
+        .find(|f| f["category"] == "Cyclic Contract Dependency");
     assert!(cycle_finding.is_some(), "must report the cycle");
 
     let cross_a = json["cross_contract_findings"]["contract_a"].as_array();
     let cross_b = json["cross_contract_findings"]["contract_b"].as_array();
-    let total_cross = cross_a.map(|a| a.len()).unwrap_or(0)
-        + cross_b.map(|b| b.len()).unwrap_or(0);
+    let total_cross = cross_a.map(|a| a.len()).unwrap_or(0) + cross_b.map(|b| b.len()).unwrap_or(0);
     assert!(total_cross > 0, "cycle must propagate findings");
-    assert!(total_cross < 100, "cycle must not produce unbounded findings");
+    assert!(
+        total_cross < 100,
+        "cycle must not produce unbounded findings"
+    );
 }
 
 #[test]
@@ -587,7 +615,12 @@ fn missing_dependency_contract_reported() {
     let manifest_path = write_manifest("cross_contract_missing.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "json"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .output()
         .expect("failed to run binary");
 
@@ -603,7 +636,10 @@ fn missing_dependency_contract_reported() {
         f["category"] == "Missing Dependency Contract"
             && f["message"].as_str().unwrap_or("").contains("oracle")
     });
-    assert!(missing_finding.is_some(), "must report missing oracle contract");
+    assert!(
+        missing_finding.is_some(),
+        "must report missing oracle contract"
+    );
     assert_eq!(missing_finding.unwrap()["severity"], "warning");
 }
 
@@ -630,7 +666,12 @@ fn no_dependencies_means_no_cross_contract_findings() {
     let manifest_path = write_manifest("cross_contract_none.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "json"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .output()
         .expect("failed to run binary");
 
@@ -720,7 +761,12 @@ fn markdown_output_includes_cross_contract_table() {
     let manifest_path = write_manifest("cross_contract_md.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "markdown"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "markdown",
+        ])
         .output()
         .expect("failed to run binary");
 
@@ -849,14 +895,21 @@ fn duplicate_derived_names_both_appear_in_json_output() {
     let manifest_path = write_manifest("dup_derived_names.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "json"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .output()
         .expect("failed to run binary");
 
     let stdout = String::from_utf8(output.stdout).expect("stdout was not valid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("output must be valid JSON");
 
-    let results = json["results"].as_object().expect("results must be an object");
+    let results = json["results"]
+        .as_object()
+        .expect("results must be an object");
 
     // Both pairs must appear — neither should silently overwrite the other
     assert_eq!(
@@ -867,7 +920,10 @@ fn duplicate_derived_names_both_appear_in_json_output() {
     );
 
     // One entry must be "v1", the other "v1 (2)"
-    assert!(results.contains_key("v1"), "first occurrence must be keyed as 'v1'");
+    assert!(
+        results.contains_key("v1"),
+        "first occurrence must be keyed as 'v1'"
+    );
     assert!(
         results.contains_key("v1 (2)"),
         "second occurrence must be keyed as 'v1 (2)', got keys: {:?}",
@@ -903,7 +959,10 @@ fn duplicate_derived_names_both_appear_in_text_output() {
     let stdout = String::from_utf8(output.stdout).expect("stdout was not valid UTF-8");
 
     // Both keys must appear somewhere in the text report
-    assert!(stdout.contains("v1"), "first pair must appear in text output");
+    assert!(
+        stdout.contains("v1"),
+        "first pair must appear in text output"
+    );
     assert!(
         stdout.contains("v1 (2)"),
         "second pair must appear as 'v1 (2)' in text output"
@@ -933,14 +992,21 @@ fn total_pairs_matches_reported_results_count_with_collisions() {
     let manifest_path = write_manifest("total_pairs_collision.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "json"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .output()
         .expect("failed to run binary");
 
     let stdout = String::from_utf8(output.stdout).expect("stdout was not valid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("output must be valid JSON");
 
-    let total_pairs = json["total_pairs"].as_u64().expect("total_pairs must be a number");
+    let total_pairs = json["total_pairs"]
+        .as_u64()
+        .expect("total_pairs must be a number");
     let results_count = json["results"]
         .as_object()
         .expect("results must be an object")
@@ -985,9 +1051,12 @@ fn directory_scan_duplicate_basenames_both_appear() {
     // Run pair A
     let out_a = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
         .args([
-            "--old-dir", old_a.to_str().unwrap(),
-            "--new-dir", new_a.to_str().unwrap(),
-            "--format", "json",
+            "--old-dir",
+            old_a.to_str().unwrap(),
+            "--new-dir",
+            new_a.to_str().unwrap(),
+            "--format",
+            "json",
         ])
         .output()
         .expect("failed to run binary");
@@ -995,19 +1064,20 @@ fn directory_scan_duplicate_basenames_both_appear() {
     // Run pair B
     let out_b = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
         .args([
-            "--old-dir", old_b.to_str().unwrap(),
-            "--new-dir", new_b.to_str().unwrap(),
-            "--format", "json",
+            "--old-dir",
+            old_b.to_str().unwrap(),
+            "--new-dir",
+            new_b.to_str().unwrap(),
+            "--format",
+            "json",
         ])
         .output()
         .expect("failed to run binary");
 
-    let json_a: Value = serde_json::from_str(
-        &String::from_utf8(out_a.stdout).expect("utf8"),
-    ).expect("valid JSON from pair A");
-    let json_b: Value = serde_json::from_str(
-        &String::from_utf8(out_b.stdout).expect("utf8"),
-    ).expect("valid JSON from pair B");
+    let json_a: Value = serde_json::from_str(&String::from_utf8(out_a.stdout).expect("utf8"))
+        .expect("valid JSON from pair A");
+    let json_b: Value = serde_json::from_str(&String::from_utf8(out_b.stdout).expect("utf8"))
+        .expect("valid JSON from pair B");
 
     // Each individual dir-scan run has exactly one pair and one result
     assert_eq!(
@@ -1022,8 +1092,20 @@ fn directory_scan_duplicate_basenames_both_appear() {
     );
 
     // Pair A is clean, pair B breaks
-    let a_key = json_a["results"].as_object().unwrap().keys().next().unwrap().clone();
-    let b_key = json_b["results"].as_object().unwrap().keys().next().unwrap().clone();
+    let a_key = json_a["results"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .next()
+        .unwrap()
+        .clone();
+    let b_key = json_b["results"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .next()
+        .unwrap()
+        .clone();
     assert_eq!(json_a["results"][&a_key]["is_safe"], Value::Bool(true));
     assert_eq!(json_b["results"][&b_key]["is_safe"], Value::Bool(false));
 }
@@ -1056,14 +1138,21 @@ fn manifest_with_three_colliding_derived_names_disambiguates_all() {
     let manifest_path = write_manifest("triple_collision.toml", &manifest_content);
 
     let output = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"))
-        .args(["--manifest", manifest_path.to_str().unwrap(), "--format", "json"])
+        .args([
+            "--manifest",
+            manifest_path.to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .output()
         .expect("failed to run binary");
 
     let stdout = String::from_utf8(output.stdout).expect("stdout was not valid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("output must be valid JSON");
 
-    let results = json["results"].as_object().expect("results must be an object");
+    let results = json["results"]
+        .as_object()
+        .expect("results must be an object");
     assert_eq!(results.len(), 3, "all three pairs must appear");
     assert!(results.contains_key("v1"), "first must be 'v1'");
     assert!(results.contains_key("v1 (2)"), "second must be 'v1 (2)'");
@@ -1090,10 +1179,7 @@ fn manifest_with_three_colliding_derived_names_disambiguates_all() {
 /// the two release directories. Each entry of `specs` is
 /// `(stem, old_fixture, new_fixture)`; a fixture of `None` means that side is
 /// deliberately absent.
-fn build_glob_tree(
-    name: &str,
-    specs: &[(&str, Option<&str>, Option<&str>)],
-) -> (PathBuf, PathBuf) {
+fn build_glob_tree(name: &str, specs: &[(&str, Option<&str>, Option<&str>)]) -> (PathBuf, PathBuf) {
     let root = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(name);
     let _ = std::fs::remove_dir_all(&root);
 
@@ -1139,7 +1225,9 @@ fn glob_mode_pairs_by_file_stem() {
 
     let stdout = String::from_utf8(output.stdout).expect("stdout was not valid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("output must be valid JSON");
-    let results = json["results"].as_object().expect("results must be an object");
+    let results = json["results"]
+        .as_object()
+        .expect("results must be an object");
 
     assert_eq!(results.len(), 2, "both stems must be paired");
     assert_eq!(
@@ -1186,7 +1274,9 @@ fn glob_mode_reports_files_matched_on_only_one_side() {
     let json: Value = serde_json::from_str(&stdout).expect("output must be valid JSON");
 
     // Only the stem present on both sides is compared…
-    let results = json["results"].as_object().expect("results must be an object");
+    let results = json["results"]
+        .as_object()
+        .expect("results must be an object");
     assert_eq!(results.len(), 1);
     assert!(results.contains_key("shared"));
 
@@ -1227,9 +1317,15 @@ fn glob_mode_supports_recursive_double_star() {
 
     let stdout = String::from_utf8(output.stdout).expect("stdout was not valid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("output must be valid JSON");
-    let results = json["results"].as_object().expect("results must be an object");
+    let results = json["results"]
+        .as_object()
+        .expect("results must be an object");
 
-    assert_eq!(results.len(), 1, "`**` must descend into nested directories");
+    assert_eq!(
+        results.len(),
+        1,
+        "`**` must descend into nested directories"
+    );
     assert!(results.contains_key("deep"));
     assert_eq!(output.status.code().unwrap(), 0);
 }
@@ -1258,7 +1354,9 @@ fn glob_mode_ignores_non_wasm_matches() {
 
     let stdout = String::from_utf8(output.stdout).expect("stdout was not valid UTF-8");
     let json: Value = serde_json::from_str(&stdout).expect("output must be valid JSON");
-    let results = json["results"].as_object().expect("results must be an object");
+    let results = json["results"]
+        .as_object()
+        .expect("results must be an object");
 
     assert_eq!(results.len(), 1, "only .wasm files participate");
     assert!(results.contains_key("token"));

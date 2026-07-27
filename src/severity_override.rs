@@ -126,8 +126,8 @@ impl SeverityOverrides {
     pub fn severity_for(&self, category: &str) -> Option<Severity> {
         let target = lookup_rule_lenient(stable_category(category))?.id;
         self.entries.iter().find_map(|(name, severity)| {
-            let matches = lookup_rule_lenient(stable_category(name))
-                .is_some_and(|rule| rule.id == target);
+            let matches =
+                lookup_rule_lenient(stable_category(name)).is_some_and(|rule| rule.id == target);
             matches.then(|| severity.clone())
         })
     }

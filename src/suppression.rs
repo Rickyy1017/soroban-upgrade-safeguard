@@ -164,10 +164,9 @@ impl SuppressionRule {
             canonical_rule_id(stable_category(&finding.category))
                 .is_some_and(|finding_rule_id| rule_id == finding_rule_id)
                 && self.target.as_deref() == finding.target.as_deref()
-                && self
-                    .fingerprint
-                    .as_ref()
-                    .map_or(true, |fp| fp.eq_ignore_ascii_case(&compute_fingerprint(finding)))
+                && self.fingerprint.as_ref().map_or(true, |fp| {
+                    fp.eq_ignore_ascii_case(&compute_fingerprint(finding))
+                })
         })
     }
 
@@ -302,10 +301,7 @@ impl SuppressionConfig {
 
     /// Return the first rule that matches `finding` together with its index, if any.
     /// The index is used by the report layer to track which rules were used.
-    pub fn matching_rule_with_index(
-        &self,
-        finding: &Finding,
-    ) -> Option<(usize, &SuppressionRule)> {
+    pub fn matching_rule_with_index(&self, finding: &Finding) -> Option<(usize, &SuppressionRule)> {
         self.rules
             .iter()
             .enumerate()

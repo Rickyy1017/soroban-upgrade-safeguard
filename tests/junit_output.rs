@@ -161,7 +161,9 @@ fn junit_suppressed_findings_are_skipped_not_failed() {
         .values()
     {
         for finding in findings.as_array().expect("category must hold an array") {
-            let rule_id = finding["rule_id"].as_str().expect("rule_id must be a string");
+            let rule_id = finding["rule_id"]
+                .as_str()
+                .expect("rule_id must be a string");
             let target = finding["target"].as_str().unwrap_or_default();
             if target.is_empty() || !seen.insert((rule_id.to_string(), target.to_string())) {
                 continue;
@@ -198,7 +200,10 @@ fn junit_suppressed_findings_are_skipped_not_failed() {
         .and_then(|rest| rest.split('"').next())
         .and_then(|n| n.parse().ok())
         .expect("suite must declare a skipped count");
-    assert!(skipped > 0, "expected suppressed cases to be counted:\n{xml}");
+    assert!(
+        skipped > 0,
+        "expected suppressed cases to be counted:\n{xml}"
+    );
     assert_eq!(
         skipped,
         count(&xml, "<skipped "),

@@ -58,7 +58,11 @@ fn a_category_can_be_named_by_rule_id_or_in_any_case() {
     let guidance = "Reordering union cases breaks positional discriminant serialization.";
     assert!(canonical.contains(guidance));
 
-    for alias in ["union_case_reordered", "union case reordered", "UNION CASE REORDERED"] {
+    for alias in [
+        "union_case_reordered",
+        "union case reordered",
+        "UNION CASE REORDERED",
+    ] {
         let (stdout, stderr, code) = run(&["explain", alias]);
         assert_eq!(code, 0, "'{alias}' should resolve: {stderr}");
         assert!(stdout.contains(guidance), "'{alias}' gave: {stdout}");
@@ -180,7 +184,10 @@ fn the_usage_text_is_unchanged_and_lists_the_four_modes() {
         "soroban-upgrade-safeguard --manifest <MANIFEST_PATH> [OPTIONS]",
         "soroban-upgrade-safeguard --old-dir <OLD_DIR> --new-dir <NEW_DIR> [OPTIONS]",
     ] {
-        assert!(stdout.contains(line), "usage line missing: {line}\n{stdout}");
+        assert!(
+            stdout.contains(line),
+            "usage line missing: {line}\n{stdout}"
+        );
     }
 
     // The new subcommand is discoverable without displacing any of the above.

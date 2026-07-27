@@ -125,7 +125,11 @@ impl ContractSpec {
                         &mut fn_seen,
                         &mut duplicates,
                         SpecEntryKind::Function,
-                        || { spec.functions.entry(name.clone()).or_insert_with(|| f.clone()); },
+                        || {
+                            spec.functions
+                                .entry(name.clone())
+                                .or_insert_with(|| f.clone());
+                        },
                     );
                 }
                 ScSpecEntry::UdtStructV0(s) => {
@@ -138,7 +142,11 @@ impl ContractSpec {
                         &mut struct_seen,
                         &mut duplicates,
                         SpecEntryKind::Struct,
-                        || { spec.structs.entry(name.clone()).or_insert_with(|| s.clone()); },
+                        || {
+                            spec.structs
+                                .entry(name.clone())
+                                .or_insert_with(|| s.clone());
+                        },
                     );
                 }
                 ScSpecEntry::UdtEnumV0(e) => {
@@ -151,7 +159,9 @@ impl ContractSpec {
                         &mut enum_seen,
                         &mut duplicates,
                         SpecEntryKind::Enum,
-                        || { spec.enums.entry(name.clone()).or_insert_with(|| e.clone()); },
+                        || {
+                            spec.enums.entry(name.clone()).or_insert_with(|| e.clone());
+                        },
                     );
                 }
                 ScSpecEntry::UdtUnionV0(u) => {
@@ -164,7 +174,9 @@ impl ContractSpec {
                         &mut union_seen,
                         &mut duplicates,
                         SpecEntryKind::Union,
-                        || { spec.unions.entry(name.clone()).or_insert_with(|| u.clone()); },
+                        || {
+                            spec.unions.entry(name.clone()).or_insert_with(|| u.clone());
+                        },
                     );
                 }
                 ScSpecEntry::UdtErrorEnumV0(e) => {
@@ -177,7 +189,11 @@ impl ContractSpec {
                         &mut err_seen,
                         &mut duplicates,
                         SpecEntryKind::ErrorEnum,
-                        || { spec.error_enums.entry(name.clone()).or_insert_with(|| e.clone()); },
+                        || {
+                            spec.error_enums
+                                .entry(name.clone())
+                                .or_insert_with(|| e.clone());
+                        },
                     );
                 }
             }
@@ -257,7 +273,10 @@ fn check_and_insert(
         }
         Some((first_section, first_xdr)) => {
             let is_identical = *first_xdr == xdr;
-            if let Some(dup) = duplicates.iter_mut().find(|d| d.kind == kind && d.name == name) {
+            if let Some(dup) = duplicates
+                .iter_mut()
+                .find(|d| d.kind == kind && d.name == name)
+            {
                 dup.sections.push(section);
                 if !is_identical {
                     dup.is_identical = false;
@@ -343,7 +362,10 @@ mod tests {
         let (spec, dups) = ContractSpec::from_entries_checked(&entries);
         assert_eq!(spec.functions.len(), 1, "only one entry inserted");
         assert_eq!(dups.len(), 1);
-        assert!(dups[0].is_identical, "identical duplicate must be flagged as identical");
+        assert!(
+            dups[0].is_identical,
+            "identical duplicate must be flagged as identical"
+        );
         assert_eq!(dups[0].kind, SpecEntryKind::Function);
         assert_eq!(dups[0].sections, vec![0, 1]);
     }
@@ -415,7 +437,10 @@ mod tests {
             "first definition must be retained"
         );
         assert_eq!(dups.len(), 1);
-        assert!(!dups[0].is_identical, "conflicting duplicate must not be identical");
+        assert!(
+            !dups[0].is_identical,
+            "conflicting duplicate must not be identical"
+        );
         assert_eq!(dups[0].kind, SpecEntryKind::Function);
         assert_eq!(dups[0].name, "transfer");
         assert_eq!(dups[0].sections, vec![0, 1]);
@@ -481,7 +506,10 @@ mod tests {
         assert_eq!(spec.functions["foo"].doc.to_string(), "v1", "first wins");
         assert_eq!(dups.len(), 1, "all three collapsed into one DuplicateEntry");
         assert_eq!(dups[0].sections, vec![0, 1, 2]);
-        assert!(!dups[0].is_identical, "conflicting third makes the whole group conflicting");
+        assert!(
+            !dups[0].is_identical,
+            "conflicting third makes the whole group conflicting"
+        );
     }
 
     // ---------------------------------------------------------------
@@ -521,10 +549,7 @@ mod tests {
     // ---------------------------------------------------------------
     #[test]
     fn from_entries_backward_compat_accepts_duplicate_silently() {
-        let entries = vec![
-            make_fn("my_func", "doc1"),
-            make_fn("my_func", "doc2"),
-        ];
+        let entries = vec![make_fn("my_func", "doc1"), make_fn("my_func", "doc2")];
         let spec = ContractSpec::from_entries(&entries);
         assert_eq!(spec.functions.len(), 1);
         assert_eq!(spec.functions["my_func"].doc.to_string(), "doc1");
@@ -558,7 +583,10 @@ mod tests {
 
         let (_, dups) = ContractSpec::from_entries_checked(&entries);
         assert_eq!(dups.len(), 1);
-        assert!(!dups[0].is_identical, "doc-only difference is still a conflict");
+        assert!(
+            !dups[0].is_identical,
+            "doc-only difference is still a conflict"
+        );
     }
 
     // ---------------------------------------------------------------
@@ -578,10 +606,7 @@ mod tests {
             inputs: VecM::default(),
             outputs: VecM::default(),
         };
-        let entries = vec![
-            ScSpecEntry::FunctionV0(f1),
-            ScSpecEntry::FunctionV0(f2),
-        ];
+        let entries = vec![ScSpecEntry::FunctionV0(f1), ScSpecEntry::FunctionV0(f2)];
         let spec = ContractSpec::from_entries(&entries);
         assert_eq!(spec.functions.len(), 1);
         let resolved = spec.functions.get("my_func").unwrap();
@@ -602,10 +627,7 @@ mod tests {
             inputs: VecM::default(),
             outputs: VecM::default(),
         };
-        let entries = vec![
-            ScSpecEntry::FunctionV0(f1),
-            ScSpecEntry::FunctionV0(f2),
-        ];
+        let entries = vec![ScSpecEntry::FunctionV0(f1), ScSpecEntry::FunctionV0(f2)];
         let spec = ContractSpec::from_entries(&entries);
         assert_eq!(spec.functions.len(), 2);
     }

@@ -1,9 +1,9 @@
-use std::fs;
 use std::env;
+use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use soroban_upgrade_safeguard::config::{Args, ResolvedConfig, RunMode, OutputFormat};
+use soroban_upgrade_safeguard::config::{Args, OutputFormat, ResolvedConfig, RunMode};
 use soroban_upgrade_safeguard::limits::ResourcePolicy;
 
 // Global lock to serialize test execution and prevent environment variable race conditions
@@ -61,12 +61,18 @@ fn test_default_config_resolution() {
     };
 
     let resolved = ResolvedConfig::resolve(args).unwrap();
-    assert_eq!(resolved.wasm_paths, vec![PathBuf::from("old.wasm"), PathBuf::from("new.wasm")]);
+    assert_eq!(
+        resolved.wasm_paths,
+        vec![PathBuf::from("old.wasm"), PathBuf::from("new.wasm")]
+    );
     assert_eq!(resolved.format, OutputFormat::Text);
     assert_eq!(resolved.explain, false);
     assert_eq!(resolved.strict, false);
     assert_eq!(resolved.no_color, false);
-    assert_eq!(resolved.policy.max_xdr_depth, ResourcePolicy::default().max_xdr_depth);
+    assert_eq!(
+        resolved.policy.max_xdr_depth,
+        ResourcePolicy::default().max_xdr_depth
+    );
 }
 
 #[test]
@@ -84,7 +90,8 @@ fn test_cli_overrides_env_and_file() {
         [limits]
         max_xdr_depth = 10
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     // Env vars set values to false/low limits
     env::set_var("SAFEGUARD_STRICT", "false");
@@ -135,7 +142,8 @@ fn test_env_overrides_file() {
         [limits]
         max_xdr_depth = 10
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     // Env vars set values
     env::set_var("SAFEGUARD_STRICT", "true");
@@ -186,7 +194,8 @@ fn test_relative_path_resolution() {
         new_dir = "new_rel"
         wasm_paths = ["a.wasm", "b.wasm"]
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let parent = config_path.parent().unwrap().canonicalize().unwrap();
 
@@ -262,7 +271,10 @@ fn test_mode_resolutions() {
         suppressions: Default::default(),
         ..ResolvedConfig::default()
     };
-    assert_eq!(config_local.validate_and_resolve_mode().unwrap(), RunMode::Local);
+    assert_eq!(
+        config_local.validate_and_resolve_mode().unwrap(),
+        RunMode::Local
+    );
 
     // 2. RPC Mode
     let config_rpc = ResolvedConfig {
@@ -281,7 +293,10 @@ fn test_mode_resolutions() {
         suppressions: Default::default(),
         ..ResolvedConfig::default()
     };
-    assert_eq!(config_rpc.validate_and_resolve_mode().unwrap(), RunMode::Rpc);
+    assert_eq!(
+        config_rpc.validate_and_resolve_mode().unwrap(),
+        RunMode::Rpc
+    );
 
     // 3. Manifest Mode
     let config_manifest = ResolvedConfig {
@@ -300,7 +315,10 @@ fn test_mode_resolutions() {
         suppressions: Default::default(),
         ..ResolvedConfig::default()
     };
-    assert_eq!(config_manifest.validate_and_resolve_mode().unwrap(), RunMode::Manifest);
+    assert_eq!(
+        config_manifest.validate_and_resolve_mode().unwrap(),
+        RunMode::Manifest
+    );
 
     // 4. DirScan Mode
     let config_dir = ResolvedConfig {
@@ -319,7 +337,10 @@ fn test_mode_resolutions() {
         suppressions: Default::default(),
         ..ResolvedConfig::default()
     };
-    assert_eq!(config_dir.validate_and_resolve_mode().unwrap(), RunMode::DirScan);
+    assert_eq!(
+        config_dir.validate_and_resolve_mode().unwrap(),
+        RunMode::DirScan
+    );
 }
 
 #[test]
@@ -399,7 +420,8 @@ fn test_unknown_fields_rejection() {
         strict = false
         unknown_key_name_invalid = "hello"
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let args = Args {
         wasm_paths: vec![],
@@ -457,8 +479,14 @@ fn test_env_parsing_edge_cases() {
     };
 
     let resolved = ResolvedConfig::resolve(args).unwrap();
-    assert_eq!(resolved.wasm_paths, vec![PathBuf::from("a.wasm"), PathBuf::from("b.wasm")]);
-    assert_eq!(resolved.policy.max_xdr_depth, ResourcePolicy::default().max_xdr_depth);
+    assert_eq!(
+        resolved.wasm_paths,
+        vec![PathBuf::from("a.wasm"), PathBuf::from("b.wasm")]
+    );
+    assert_eq!(
+        resolved.policy.max_xdr_depth,
+        ResourcePolicy::default().max_xdr_depth
+    );
     assert_eq!(resolved.strict, false);
     assert_eq!(resolved.format, OutputFormat::Text);
 
@@ -479,7 +507,8 @@ fn test_file_config_partial_deserialization() {
         [limits]
         max_entries = 555
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let args = Args {
         wasm_paths: vec![],
@@ -504,7 +533,10 @@ fn test_file_config_partial_deserialization() {
     assert_eq!(resolved.no_color, true);
     assert_eq!(resolved.policy.max_entries, 555);
     // Other values should fall back to default
-    assert_eq!(resolved.policy.max_xdr_depth, ResourcePolicy::default().max_xdr_depth);
+    assert_eq!(
+        resolved.policy.max_xdr_depth,
+        ResourcePolicy::default().max_xdr_depth
+    );
 }
 
 #[test]
@@ -520,7 +552,8 @@ fn test_verdict_settings_mapping() {
         max_suppressions = 999
         allow_targetless = true
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let args = Args {
         wasm_paths: vec![],
@@ -617,7 +650,7 @@ fn test_env_vars_precedence_layering() {
     assert_eq!(resolved_override.no_color, true); // CLI overrides env (false -> true)
     assert_eq!(resolved_override.policy.max_xdr_depth, 180); // CLI overrides env (100 -> 180)
     assert_eq!(resolved_override.policy.max_xdr_len, 60000); // CLI overrides env
-    assert_eq!(resolved_override.policy.max_entries, 3000);  // CLI overrides env
+    assert_eq!(resolved_override.policy.max_entries, 3000); // CLI overrides env
     assert_eq!(resolved_override.policy.max_walk_depth, 350); // CLI overrides env
 
     clear_safeguard_env();
@@ -641,7 +674,8 @@ fn test_suppressions_expired_rule_validation() {
         fingerprint = "0000000000000000000000000000000000000000000000000000000000000000"
         reason = "Legacy deprecation"
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let args = Args {
         wasm_paths: vec![],
@@ -651,7 +685,10 @@ fn test_suppressions_expired_rule_validation() {
 
     // Resolving config with expired rule should fail validation
     let resolved_err = ResolvedConfig::resolve(args);
-    assert!(resolved_err.is_err(), "Expected error due to expired suppression rule");
+    assert!(
+        resolved_err.is_err(),
+        "Expected error due to expired suppression rule"
+    );
     let err_msg = format!("{:?}", resolved_err.err().unwrap());
     assert!(
         err_msg.contains("expired") || err_msg.contains("Expiry"),
@@ -678,7 +715,8 @@ fn test_suppressions_fingerprint_mismatch_validation() {
         fingerprint = "0000000000000000000000000000000000000000000000000000000000000000"
         reason = "Intentional"
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let args = Args {
         wasm_paths: vec![],
@@ -688,7 +726,7 @@ fn test_suppressions_fingerprint_mismatch_validation() {
 
     let resolved = ResolvedConfig::resolve(args).unwrap();
     assert_eq!(resolved.suppressions.rules.len(), 1);
-    
+
     // Simulate finding matching category and target but different fingerprint
     let finding = soroban_upgrade_safeguard::diff::Finding {
         category: "Struct Field Removed".to_string(),
@@ -698,9 +736,12 @@ fn test_suppressions_fingerprint_mismatch_validation() {
         severity: soroban_upgrade_safeguard::diff::Severity::Critical,
         classification: None,
     };
-    
+
     let matching_rule = resolved.suppressions.matching_rule(&finding);
-    assert!(matching_rule.is_none(), "Rule with mismatched fingerprint should not match the finding");
+    assert!(
+        matching_rule.is_none(),
+        "Rule with mismatched fingerprint should not match the finding"
+    );
 }
 
 #[test]
@@ -715,7 +756,10 @@ fn test_rpc_expected_hash_validation() {
     };
 
     let resolved = ResolvedConfig::resolve(args).unwrap();
-    assert_eq!(resolved.expected_wasm_hash, Some("a1b2c3d4e5f6".to_string()));
+    assert_eq!(
+        resolved.expected_wasm_hash,
+        Some("a1b2c3d4e5f6".to_string())
+    );
 }
 
 #[test]
@@ -730,7 +774,8 @@ fn test_manifest_relative_paths() {
         r#"
         manifest = "subdir/manifest.toml"
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let subdir = temp_dir.join("subdir");
     fs::create_dir_all(&subdir).unwrap();
@@ -743,11 +788,13 @@ fn test_manifest_relative_paths() {
     };
 
     let resolved = ResolvedConfig::resolve(args).unwrap();
-    let expected = config_path.parent().unwrap().join("subdir/manifest.toml").canonicalize().unwrap();
-    assert_eq!(
-        resolved.manifest.unwrap().canonicalize().unwrap(),
-        expected
-    );
+    let expected = config_path
+        .parent()
+        .unwrap()
+        .join("subdir/manifest.toml")
+        .canonicalize()
+        .unwrap();
+    assert_eq!(resolved.manifest.unwrap().canonicalize().unwrap(), expected);
 }
 
 #[test]
@@ -779,7 +826,10 @@ fn test_env_vars_mapping_exhaustive() {
     assert_eq!(resolved.manifest, Some(PathBuf::from("manifest_env.toml")));
     assert_eq!(resolved.old_dir, Some(PathBuf::from("old_dir_env")));
     assert_eq!(resolved.new_dir, Some(PathBuf::from("new_dir_env")));
-    assert_eq!(resolved.wasm_paths, vec![PathBuf::from("env_a.wasm"), PathBuf::from("env_b.wasm")]);
+    assert_eq!(
+        resolved.wasm_paths,
+        vec![PathBuf::from("env_a.wasm"), PathBuf::from("env_b.wasm")]
+    );
     assert_eq!(resolved.contract_id, Some("C_ENV".to_string()));
     assert_eq!(resolved.rpc_url, Some("http://env_rpc".to_string()));
 
@@ -792,11 +842,11 @@ fn test_resolved_config_debug_serialize() {
     clear_safeguard_env();
 
     let resolved = ResolvedConfig::default();
-    
+
     // Verify Debug representation
     let debug_str = format!("{:?}", resolved);
     assert!(debug_str.contains("ResolvedConfig"));
-    
+
     // Verify serialization logic
     let serialized = serde_json::to_string(&resolved).unwrap();
     assert!(serialized.contains("wasm_paths"));
@@ -816,7 +866,10 @@ fn test_config_file_resolution_missing_file() {
     };
 
     let resolved = ResolvedConfig::resolve(args);
-    assert!(resolved.is_err(), "Expected error when specifying a nonexistent configuration file");
+    assert!(
+        resolved.is_err(),
+        "Expected error when specifying a nonexistent configuration file"
+    );
 }
 
 #[test]
@@ -860,7 +913,8 @@ fn test_suppressions_expiry_date_bounds() {
         fingerprint = "0000000000000000000000000000000000000000000000000000000000000000"
         reason = "Invalid format"
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let args = Args {
         wasm_paths: vec![],
@@ -883,7 +937,8 @@ fn test_suppressions_expiry_date_bounds() {
         fingerprint = "0000000000000000000000000000000000000000000000000000000000000000"
         reason = "Valid leap day"
         "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let args_leap = Args {
         wasm_paths: vec![],
@@ -894,6 +949,3 @@ fn test_suppressions_expiry_date_bounds() {
     let resolved_leap = ResolvedConfig::resolve(args_leap).unwrap();
     assert_eq!(resolved_leap.suppressions.rules.len(), 1);
 }
-
-
-

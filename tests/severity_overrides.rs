@@ -29,7 +29,12 @@ fn write_config(name: &str, contents: &str) -> PathBuf {
 
 /// Run the binary over `old -> new` with an optional config and format.
 /// Returns `(stdout, stderr, exit code)`.
-fn run(old: &str, new: &str, config: Option<&PathBuf>, format: Option<&str>) -> (String, String, i32) {
+fn run(
+    old: &str,
+    new: &str,
+    config: Option<&PathBuf>,
+    format: Option<&str>,
+) -> (String, String, i32) {
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_soroban-upgrade-safeguard"));
     cmd.arg(wasm(old)).arg(wasm(new));
     if let Some(format) = format {
@@ -147,10 +152,7 @@ fn a_rule_id_key_and_a_legacy_alias_resolve_to_the_same_category() {
         "struct_field_removed",
         "\"Event Field Removed\"",
     ] {
-        let config = write_config(
-            "alias_key",
-            &format!("[severity]\n{key} = \"info\"\n"),
-        );
+        let config = write_config("alias_key", &format!("[severity]\n{key} = \"info\"\n"));
         let (stdout, _, _) = run("v1.wasm", "v2.wasm", Some(&config), Some("json"));
         let json: Value = serde_json::from_str(&stdout).expect("stdout must be valid JSON");
         assert_eq!(
@@ -213,7 +215,10 @@ fn overrides_are_applied_consistently_across_all_output_formats() {
         "markdown: {markdown}"
     );
     assert!(markdown.contains("VERDICT CHANGED BY CONFIG"), "markdown");
-    assert!(markdown.contains("| **Severity overridden** | 3 |"), "markdown");
+    assert!(
+        markdown.contains("| **Severity overridden** | 3 |"),
+        "markdown"
+    );
 
     let (html, _, code) = run("v1.wasm", "v2.wasm", Some(&config), Some("html"));
     assert_eq!(code, 0);

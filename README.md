@@ -117,6 +117,16 @@ to point at another file. See [`.safeguard.example.toml`](.safeguard.example.tom
 for a documented template and the [documentation](docs/documentation.md#suppressing-known-breaking-changes)
 for the full `target` convention.
 
+## Limitations
+
+- The tool compares only the declared exported interface and environment metadata. It does not inspect function bodies or the runtime behavior of the contract.
+- Storage layout safety is only verified when you supply a storage schema; otherwise the analysis is limited to the public interface.
+- Event detection is explicit and name-heuristic backed. Types that are not classified as events are treated as ordinary structs or enums.
+- Appended fields in struct-like values are reported as warnings, because the tool cannot verify that the runtime migration path is safe.
+- Renaming a type is seen as a removal plus an addition, not as a semantic rename.
+
+For the full list, see [docs/documentation.md#limitations](docs/documentation.md#limitations).
+
 ### Tuning severity per category
 
 `--strict` promotes every warning at once, and a suppression only ever silences

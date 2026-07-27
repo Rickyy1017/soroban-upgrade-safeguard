@@ -54,18 +54,8 @@ pub fn render_type_diff(old_ty: &str, new_ty: &str, use_color: bool) -> String {
 
     let (old_line, new_line) = if use_color {
         (
-            format!(
-                "{}{}{}",
-                prefix,
-                old_mid.red().bold(),
-                suffix
-            ),
-            format!(
-                "{}{}{}",
-                prefix,
-                new_mid.green().bold(),
-                suffix
-            ),
+            format!("{}{}{}", prefix, old_mid.red().bold(), suffix),
+            format!("{}{}{}", prefix, new_mid.green().bold(), suffix),
         )
     } else {
         (
